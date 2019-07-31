@@ -1,3 +1,6 @@
+[![CircleCI](https://img.shields.io/circleci/build/github/belm0/perf-timer)](https://circleci.com/gh/belm0/perf-timer)
+[![PyPi](https://img.shields.io/pypi/v/perf-timer.svg)](https://pypi.org/project/perf-timer)
+
 # PerfTimer
 
 An indispensable performance timer for Python
@@ -159,6 +162,7 @@ pip install perf-timer
     * more async/await support: asyncio, curio, etc.
       * [asyncio hint which no longer works](https://stackoverflow.com/revisions/34827291/3)
   * project infrastructure
+    * code coverage integration
     * publish docs
     * overhead benchmark
     * type annotations and check
