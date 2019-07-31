@@ -7,7 +7,7 @@ An indispensable performance timer for Python
 
 ## Background
 ### Taxonomy
-Three general tools should be employed to to
+Three general tools should be employed to
 understand the CPU performance of your Python code:
   1. **sampling profiler** - measures the relative
   distribution of time spent among function or
@@ -135,8 +135,8 @@ async def get_thumbnail_image(path):
 
 This module also provides the `trio_perf_counter()` primitive.
 Following the semantics of the various performance counters in Python's `time`
-module, trio_perf_counter() provides high resolution timing of a Trio task's
-execution time, excluding periods where it's sleeping or blocked on I/O.
+module, `trio_perf_counter()` provides high resolution measurement of a Trio
+task's execution time, excluding periods where it's sleeping or blocked on I/O.
 (`TrioPerfTimer` uses this internally.)
 
 ```python
