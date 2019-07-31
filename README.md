@@ -159,7 +159,6 @@ pip install perf-timer
     * more async/await support: asyncio, curio, etc.
       * [asyncio hint which no longer works](https://stackoverflow.com/revisions/34827291/3)
   * project infrastructure
-    * continuous integration
     * publish docs
     * overhead benchmark
     * type annotations and check
