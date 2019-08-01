@@ -1,5 +1,6 @@
-[![CircleCI](https://img.shields.io/circleci/build/github/belm0/perf-timer)](https://circleci.com/gh/belm0/perf-timer)
-[![PyPi](https://img.shields.io/pypi/v/perf-timer.svg)](https://pypi.org/project/perf-timer)
+[![CircleCiStatus](https://img.shields.io/circleci/build/github/belm0/perf-timer)](https://circleci.com/gh/belm0/perf-timer)
+[![PyPiVersion](https://img.shields.io/pypi/v/perf-timer.svg)](https://pypi.org/project/perf-timer)
+[![PyPiPyVersions](https://img.shields.io/pypi/pyversions/perf-timer.svg)](https://pypi.org/project/perf-timer)
 
 # PerfTimer
 
@@ -36,8 +37,8 @@ Use cases include:
 ### Yet another code timer?
 
 It seems everyone has tried their hand at writing one of these timer
-utilities.  Implementations can be found in public repos and snippets, PyPi,
-and there's even a Python feature request.  That's not counting all the
+utilities.  Implementations can be found in public repos, snippets, and PyPi—
+there's even a Python feature request.  That's not counting all the
 proprietary and one-off instances.
 
 Features of this library:
