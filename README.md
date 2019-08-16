@@ -1,6 +1,6 @@
-[![CircleCiStatus](https://img.shields.io/circleci/build/github/belm0/perf-timer)](https://circleci.com/gh/belm0/perf-timer)
-[![PyPiVersion](https://img.shields.io/pypi/v/perf-timer.svg)](https://pypi.org/project/perf-timer)
-[![PyPiPyVersions](https://img.shields.io/pypi/pyversions/perf-timer.svg)](https://pypi.org/project/perf-timer)
+[![Build status](https://img.shields.io/circleci/build/github/belm0/perf-timer)](https://circleci.com/gh/belm0/perf-timer)
+[![Package version](https://img.shields.io/pypi/v/perf-timer.svg)](https://pypi.org/project/perf-timer)
+[![Supported Python versions](https://img.shields.io/pypi/pyversions/perf-timer.svg)](https://pypi.org/project/perf-timer)
 
 # PerfTimer
 
@@ -47,7 +47,7 @@ Features of this library:
   pluggable logging and timer functions
   * **low overhead** (typically a few microseconds) - it means you can have
   instrumentation enabled on production code
-  * **async/await support** (Trio only) - first of it's kind!  Periods when a task is
+  * **async/await support** (Trio only) - first of its kind!  Periods when a task is
   is sleeping, blocked by I/O, etc. will not be counted.
   * (coming soon) **percentile durations** - e.g. find median and 90 percentile
   execution time of the instrumented code.  Implementated with a bounded-memory,
