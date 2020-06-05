@@ -3,6 +3,10 @@ from dataclasses import dataclass
 from time import perf_counter
 
 import trio
+try:
+    import trio.lowlevel as trio_lowlevel
+except ImportError:
+    import trio.hazmat as trio_lowlevel
 
 from ._impl import PerfTimer
 
@@ -33,7 +37,7 @@ class _DescheduledTimeInstrument(trio.abc.Instrument):
     def task_exited(self, task):
         # unregister instrument if there are no more traced tasks
         if self._info_by_task.pop(task, None) and not self._info_by_task:
-            trio.hazmat.remove_instrument(self)
+            trio_lowlevel.remove_instrument(self)
 
     def get_elapsed_descheduled_time(self, task):
         """
@@ -61,8 +65,8 @@ def trio_perf_counter():
     instrumentation is automatically removed when the corresponding tasks
     have exited.
     """
-    trio.hazmat.add_instrument(_instrument)
-    task = trio.hazmat.current_task()
+    trio_lowlevel.add_instrument(_instrument)
+    task = trio_lowlevel.current_task()
     return perf_counter() - _instrument.get_elapsed_descheduled_time(task)
 
 

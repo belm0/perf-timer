@@ -3,6 +3,10 @@ from unittest.mock import Mock
 
 import pytest
 import trio
+try:
+    import trio.lowlevel as trio_lowlevel
+except ImportError:
+    import trio.hazmat as trio_lowlevel
 
 from perf_timer import trio_perf_counter, _trio, TrioPerfTimer
 
@@ -10,7 +14,7 @@ from perf_timer import trio_perf_counter, _trio, TrioPerfTimer
 async def test_descheduled_time_instrument():
     time_fn = Mock(side_effect=[5, 10, 10, 20])
     instrument = _trio._DescheduledTimeInstrument(time_fn=time_fn)
-    trio.hazmat.add_instrument(instrument)
+    trio_lowlevel.add_instrument(instrument)
 
     # Only tasks referenced by get_elapsed_descheduled_time() will be tracked,
     # so instrument is not tracking the current task.
@@ -21,7 +25,7 @@ async def test_descheduled_time_instrument():
         @nursery.start_soon
         async def _tracked_child():
             # calling get_elapsed_descheduled_time() initiates tracking
-            task = trio.hazmat.current_task()
+            task = trio_lowlevel.current_task()
             assert instrument.get_elapsed_descheduled_time(task) == 0
             await trio.sleep(0)
             assert instrument.get_elapsed_descheduled_time(task) == 10 - 5
@@ -32,15 +36,15 @@ async def test_descheduled_time_instrument():
 
     # the sole tracked task exited, so instrument is automatically removed
     with pytest.raises(KeyError):
-        trio.hazmat.remove_instrument(instrument)
+        trio_lowlevel.remove_instrument(instrument)
 
 
 async def test_descheduled_time_instrument_exclude_children():
     time_fn = Mock(side_effect=[5, 10])
     instrument = _trio._DescheduledTimeInstrument(time_fn=time_fn)
-    trio.hazmat.add_instrument(instrument)
+    trio_lowlevel.add_instrument(instrument)
 
-    task = trio.hazmat.current_task()
+    task = trio_lowlevel.current_task()
     assert instrument.get_elapsed_descheduled_time(task) == 0
 
     async with trio.open_nursery() as nursery:
@@ -52,7 +56,7 @@ async def test_descheduled_time_instrument_exclude_children():
     assert time_fn.call_count == 2  # 2 x 1 deschedule (due to nursery)
 
     # our task is still alive, so instrument remains active
-    trio.hazmat.remove_instrument(instrument)
+    trio_lowlevel.remove_instrument(instrument)
 
 
 async def test_trio_perf_counter_time_sleep():
@@ -77,7 +81,7 @@ async def test_trio_perf_counter_unregister():
     # the Trio instrumentation to no longer be active (so remove call
     # will fail).
     with pytest.raises(KeyError):
-        trio.hazmat.remove_instrument(_trio._instrument)
+        trio_lowlevel.remove_instrument(_trio._instrument)
 
 
 async def test_trio_perf_timer(autojump_clock):
