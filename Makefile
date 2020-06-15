@@ -8,5 +8,5 @@ test:
 lint:
 	PYTHONPATH=src python -m pylint src/ tests/
 
-test-requirements.txt: test-requirements.in
-	pip-compile --output-file $@ $<
+test-requirements.txt: setup.py test-requirements.in
+	pip-compile --output-file $@ $^
