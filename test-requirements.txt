@@ -9,7 +9,6 @@ async-generator==1.10     # via pytest-trio, trio
 attrs==19.3.0             # via outcome, pytest, trio
 coverage==5.1             # via pytest-cov
 idna==2.9                 # via trio
-importlib-metadata==1.6.1  # via pluggy, pytest
 isort==4.3.21             # via pylint
 lazy-object-proxy==1.4.3  # via astroid
 mccabe==0.6.1             # via pylint
@@ -28,7 +27,5 @@ sniffio==1.1.0            # via trio
 sortedcontainers==2.1.0   # via trio
 toml==0.10.1              # via pylint
 trio==0.15.1              # via -r test-requirements.in, pytest-trio
-typed-ast==1.4.1          # via astroid
 wcwidth==0.2.3            # via pytest
 wrapt==1.12.1             # via astroid
-zipp==3.1.0               # via importlib-metadata
