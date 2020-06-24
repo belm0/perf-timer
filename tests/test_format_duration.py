@@ -10,6 +10,7 @@ from perf_timer._impl import _format_duration
     ((12.34e-6, 3), '12.3 µs'),
     ((1.234e-9, 3), '1.23 ns'),
     ((   .5e-9, 3), '0.5 ns' ),
+    ((     120, 3, 'X'), '120Xs'),
 ])
 def test_format_duration(in_, expected):
     assert _format_duration(*in_) == expected

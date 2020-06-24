@@ -5,10 +5,12 @@ from inspect import iscoroutinefunction
 from multiprocessing import Lock
 from time import perf_counter, thread_time
 
+from perf_timer._histogram import ApproximateHistogram
+
 _start_time_by_instance = ContextVar('start_time', default={})
 
 
-def _format_duration(duration, precision=3):
+def _format_duration(duration, precision=3, delimiter=' '):
     """Returns human readable duration.
 
     >>> _format_duration(.0507)
@@ -19,7 +21,7 @@ def _format_duration(duration, precision=3):
     if duration > 0:
         i = min(-int(math.floor(math.log10(duration)) // 3), i)
     symbol, scale = units[i]
-    return f'{duration * scale:.{precision}g} {symbol}'
+    return f'{duration * scale:.{precision}g}{delimiter}{symbol}'
 
 
 class _BetterContextDecorator:
@@ -47,16 +49,19 @@ class _BetterContextDecorator:
 
 class _PerfTimerBase(_BetterContextDecorator):
 
-    # NOTE: `observer` is handled by the metaclass.  It's included here only
-    #   for documentation.
+    # NOTE: `observer` is handled by the metaclass, and `quantiles` is handled
+    #   by HistogramObserver.  They're included here only for documentation.
     def __init__(self, name, *, time_fn=perf_counter, log_fn=print,
-                 observer=None):
+                 observer=None, quantiles=None):
         """
         :param name: string used to annotate the timer output
         :param time_fn: optional function which returns the current time
         :param log_fn: optional function which records the output string
         :param observer: mixin class to observe and summarize samples
-            (AverageObserver|StdDevObserver, default AverageObserver)
+            (AverageObserver|StdDevObserver|HistogramObserver, default AverageObserver)
+        :param quantiles: for HistogramObserver, a sequence of quantiles to report.
+            Values must be in range [0..1] and monotonically increasing.
+            (default: (0.5, 0.9, 0.98))
         """
         self.name = name
         self._time_fn = time_fn
@@ -145,6 +150,42 @@ class StdDevObserver(_PerfTimerBase):
         elif self._count > 0:
             self._log_fn(f'timer "{self.name}": '
                          f'{_format_duration(self._mean)} ')
+
+
+# TODO: tests for histogram observer
+class HistogramObserver(_PerfTimerBase):
+    """Mixin which outputs mean, standard deviation, and percentiles
+
+    output synopsis:
+        timer "foo": avg 11.9ms ± 961µs, 50% ≤ 12.6ms, 90% ≤ 12.7ms in 10 runs
+    """
+
+    def __init__(self, *args, quantiles=(.5, .9, .98), max_bins=64, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not all(0 <= x <= 1 for x in quantiles):
+            raise ValueError('quantile values must be in the range [0, 1]')
+        if not all(a < b for a, b in zip(quantiles, quantiles[1:])):
+            raise ValueError('quantiles must be monotonically increasing')
+        self._quantiles = quantiles
+        self._hist = ApproximateHistogram(max_bins=max_bins)
+
+    def _observe(self, duration):
+        self._hist.add(duration)
+
+    def __del__(self):
+        if self._hist.count > 1:
+            _format = functools.partial(_format_duration, delimiter='')
+            hist_quantiles = self._hist.quantile(self._quantiles)
+            percentiles = [f"{pct * 100:.0f}% ≤ {_format(val)}"
+                           for pct, val in zip(self._quantiles, hist_quantiles)]
+            self._log_fn(f'timer "{self.name}": '
+                         f'avg {_format(self._hist.mean())} '
+                         f'± {_format(self._hist.std())}, '
+                         f'{", ".join(percentiles)} '
+                         f'in {self._hist.count} runs')
+        elif self._hist.count > 0:
+            self._log_fn(f'timer "{self.name}": '
+                         f'{_format_duration(self._hist.sum())} ')
 
 
 class _ObservationLock(_PerfTimerBase):
