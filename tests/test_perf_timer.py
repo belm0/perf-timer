@@ -81,3 +81,8 @@ def test_thread_perf_timer_lock():
     del timer
 
     assert lock_count == 2
+
+
+def test_perf_timer_type():
+    # since metaclass is used, ensure type is cached
+    assert type(PerfTimer('foo')) is type(PerfTimer('bar'))

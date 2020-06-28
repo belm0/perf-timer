@@ -47,11 +47,16 @@ class _BetterContextDecorator:
 
 class _PerfTimerBase(_BetterContextDecorator):
 
-    def __init__(self, name, *, time_fn=perf_counter, log_fn=print):
+    # NOTE: `observer` is handled by the metaclass.  It's included here only
+    #   for documentation.
+    def __init__(self, name, *, time_fn=perf_counter, log_fn=print,
+                 observer=None):
         """
         :param name: string used to annotate the timer output
         :param time_fn: optional function which returns the current time
         :param log_fn: optional function which records the output string
+        :param observer: mixin class to observe and summarize samples
+            (default AverageObserver)
         """
         self.name = name
         self._time_fn = time_fn
@@ -74,7 +79,7 @@ class _PerfTimerBase(_BetterContextDecorator):
             self._observe(duration)
 
 
-class _AverageObserver(_PerfTimerBase):
+class AverageObserver(_PerfTimerBase):
     """Mixin which outputs mean and max"""
 
     def __init__(self, *args, **kwargs):
@@ -112,7 +117,21 @@ class _ObservationLock(_PerfTimerBase):
             super()._observe(duration)
 
 
-class PerfTimer(_AverageObserver, _PerfTimerBase):
+class _MixinMeta(type):
+    """Metaclass which injects an observer mixin based on constructor arg"""
+
+    @staticmethod
+    @functools.lru_cache(maxsize=None)
+    def _get_cls(observer, cls):
+        # NOTE: bases ordering allows _ObservationLock to override the observer
+        return type(cls.__name__, (cls, observer), {})
+
+    def __call__(cls, *args, observer=AverageObserver, **kwargs):
+        out_cls = _MixinMeta._get_cls(observer, cls)
+        return type.__call__(out_cls, *args, **kwargs)
+
+
+class PerfTimer(_PerfTimerBase, metaclass=_MixinMeta):
     """Performance timer
 
     Use to measure performance of a block of code.  The object will log
@@ -137,7 +156,7 @@ class PerfTimer(_AverageObserver, _PerfTimerBase):
     """
 
 
-class ThreadPerfTimer(_ObservationLock, _AverageObserver, _PerfTimerBase):
+class ThreadPerfTimer(_ObservationLock, PerfTimer):
     """Variant of PerfTimer which measures CPU time of the current thread"""
 
     def __init__(self, name, time_fn=thread_time, **kwargs):
