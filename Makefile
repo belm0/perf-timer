@@ -6,7 +6,7 @@ test:
 
 .PHONY: lint
 lint:
-	PYTHONPATH=src python -m pylint src/ tests/
+	PYTHONPATH=src python -m pylint src/ tests/ benchmarks/
 
 test-requirements.txt: setup.py test-requirements.in
 	pip-compile --output-file $@ $^

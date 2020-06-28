@@ -1,5 +1,6 @@
 import functools
 import math
+import timeit
 from _contextvars import ContextVar
 from inspect import iscoroutinefunction
 from multiprocessing import Lock
@@ -244,3 +245,18 @@ class ThreadPerfTimer(_ObservationLock, PerfTimer):
 
     def __init__(self, name, time_fn=thread_time, **kwargs):
         super().__init__(name, time_fn=time_fn, **kwargs)
+
+
+def measure_overhead(timer_factory):
+    """Measure the overhead of a timer instance from the given factory.
+
+    :param timer_factory: callable which returns a new timer instance
+    :return: the average duration of one observation, in seconds
+    """
+    timeit_timer = timeit.Timer(
+        globals={'timer': timer_factory('foo', log_fn=lambda x: x)},
+        stmt='with timer: pass'
+    )
+    n, duration = timeit_timer.autorange()
+    min_duration = min([duration] + timeit_timer.repeat(number=n))
+    return min_duration / n

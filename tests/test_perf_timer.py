@@ -1,8 +1,11 @@
+from functools import partial
 from unittest.mock import Mock
 
 import pytest
 
-from perf_timer import PerfTimer, ThreadPerfTimer
+from perf_timer import PerfTimer, ThreadPerfTimer, \
+    AverageObserver, StdDevObserver, HistogramObserver, \
+    measure_overhead
 
 
 def test_perf_timer():
@@ -86,3 +89,9 @@ def test_thread_perf_timer_lock():
 def test_perf_timer_type():
     # since metaclass is used, ensure type is cached
     assert type(PerfTimer('foo')) is type(PerfTimer('bar'))
+
+
+def test_measure_overhead():
+    assert measure_overhead(partial(PerfTimer, observer=AverageObserver)) < \
+           measure_overhead(partial(PerfTimer, observer=StdDevObserver)) < \
+           measure_overhead(partial(PerfTimer, observer=HistogramObserver))

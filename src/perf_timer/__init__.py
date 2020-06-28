@@ -1,5 +1,5 @@
 from ._impl import (PerfTimer, ThreadPerfTimer, AverageObserver,
-                    StdDevObserver, HistogramObserver)
+                    StdDevObserver, HistogramObserver, measure_overhead)
 try:
     from ._trio import trio_perf_counter, TrioPerfTimer
 except ImportError:
