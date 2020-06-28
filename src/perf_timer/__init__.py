@@ -1,4 +1,5 @@
-from ._impl import PerfTimer, ThreadPerfTimer, AverageObserver
+from ._impl import (PerfTimer, ThreadPerfTimer, AverageObserver,
+                    StdDevObserver)
 try:
     from ._trio import trio_perf_counter, TrioPerfTimer
 except ImportError:

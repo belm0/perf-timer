@@ -56,7 +56,7 @@ class _PerfTimerBase(_BetterContextDecorator):
         :param time_fn: optional function which returns the current time
         :param log_fn: optional function which records the output string
         :param observer: mixin class to observe and summarize samples
-            (default AverageObserver)
+            (AverageObserver|StdDevObserver, default AverageObserver)
         """
         self.name = name
         self._time_fn = time_fn
@@ -80,7 +80,11 @@ class _PerfTimerBase(_BetterContextDecorator):
 
 
 class AverageObserver(_PerfTimerBase):
-    """Mixin which outputs mean and max"""
+    """Mixin which outputs mean and max
+
+    output synopsis:
+        timer "foo": avg 11.9 ms, max 12.8 ms in 10 runs
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -97,12 +101,50 @@ class AverageObserver(_PerfTimerBase):
         if self._count > 1:
             mean = self._duration / self._count
             self._log_fn(f'timer "{self.name}": '
-                         f'average {_format_duration(mean)}, '
+                         f'avg {_format_duration(mean)}, '
                          f'max {_format_duration(self._max)} '
                          f'in {self._count} runs')
         elif self._count > 0:
             self._log_fn(f'timer "{self.name}": '
                          f'{_format_duration(self._duration)} ')
+
+
+# TODO: tests for stddev observer
+class StdDevObserver(_PerfTimerBase):
+    """Mixin which outputs mean, stddev, and max
+
+    15 - 20% slower than _AverageObserver.
+    https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_online_algorithm
+
+    output synopsis:
+        timer "foo": avg 11.9 ms ± 961 µs, max 12.8 ms in 10 runs
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._count = 0
+        self._mean = 0
+        self._m2 = 0
+        self._max = -math.inf
+
+    def _observe(self, duration):
+        self._count += 1
+        delta = duration - self._mean
+        self._mean += delta / self._count
+        self._m2 += delta * (duration - self._mean)
+        self._max = max(self._max, duration)
+
+    def __del__(self):
+        if self._count > 1:
+            std = math.sqrt(self._m2 / self._count)
+            self._log_fn(f'timer "{self.name}": '
+                         f'avg {_format_duration(self._mean)} '
+                         f'± {_format_duration(std)}, '
+                         f'max {_format_duration(self._max)} '
+                         f'in {self._count} runs')
+        elif self._count > 0:
+            self._log_fn(f'timer "{self.name}": '
+                         f'{_format_duration(self._mean)} ')
 
 
 class _ObservationLock(_PerfTimerBase):
