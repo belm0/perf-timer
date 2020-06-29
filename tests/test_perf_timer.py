@@ -8,12 +8,39 @@ from perf_timer import PerfTimer, ThreadPerfTimer, \
     measure_overhead
 
 
+class _Containing:
+    """Argument matcher for Mock"""
+
+    def __init__(self, value):
+        self.value = value
+
+    def __eq__(self, other):
+        return self.value in other
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}("{self.value}")'
+
+
+class _NotContaining:
+    """Argument matcher for Mock"""
+
+    def __init__(self, value):
+        self.value = value
+
+    def __eq__(self, other):
+        return self.value not in other
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}("{self.value}")'
+
+
 def test_perf_timer():
     # time_fn is called on enter and exit of each with block
     time_fn = Mock(side_effect=[10, 15,
                                 15, 25])
     log_fn = Mock()
-    timer = PerfTimer('foo', time_fn=time_fn, log_fn=log_fn)
+    timer = PerfTimer('foo', observer=AverageObserver, time_fn=time_fn,
+                      log_fn=log_fn)
 
     for _ in range(2):
         with timer:
@@ -23,25 +50,23 @@ def test_perf_timer():
     assert timer._sum == 15
     assert timer._max == 10
     del timer
-    assert 'in 2 runs' in log_fn.call_args_list[0][0][0]
+    log_fn.assert_called_once_with(_Containing('in 2 runs'))
 
 
 def test_perf_timer_decorator():
     time_fn = Mock(side_effect=[10, 15,
                                 15, 25])
-    timer = PerfTimer('foo', time_fn=time_fn)
+    log_fn = Mock()
 
-    @timer
+    @PerfTimer('foo', time_fn=time_fn, log_fn=log_fn)
     def foo():
         pass
 
     for _ in range(2):
         foo()
 
-    assert timer._count == 2
-    assert timer._sum == 15
-    assert timer._max == 10
-    del timer
+    del foo
+    log_fn.assert_called_once_with(_Containing('in 2 runs'))
 
 
 def test_perf_timer_one_run():
@@ -53,7 +78,7 @@ def test_perf_timer_one_run():
 
     assert timer._count == 1
     del timer
-    assert ' in ' not in log_fn.call_args_list[0][0][0]
+    log_fn.assert_called_once_with(_NotContaining(' in '))
 
 
 def test_perf_timer_non_reentrant():

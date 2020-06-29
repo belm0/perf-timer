@@ -61,7 +61,7 @@ class _PerfTimerBase(_BetterContextDecorator):
         :param time_fn: optional function which returns the current time
         :param log_fn: optional function which records the output string
         :param observer: mixin class to observe and summarize samples
-            (AverageObserver|StdDevObserver|HistogramObserver, default AverageObserver)
+            (AverageObserver|StdDevObserver|HistogramObserver, default StdDevObserver)
         :param quantiles: for HistogramObserver, a sequence of quantiles to report.
             Values must be in range [0..1] and monotonically increasing.
             (default: (0.5, 0.9, 0.98))
@@ -210,7 +210,7 @@ class _MixinMeta(type):
         # NOTE: bases ordering allows _ObservationLock to override the observer
         return type(cls.__name__, (cls, observer), {})
 
-    def __call__(cls, *args, observer=AverageObserver, **kwargs):
+    def __call__(cls, *args, observer=StdDevObserver, **kwargs):
         out_cls = _MixinMeta._get_cls(observer, cls)
         return type.__call__(out_cls, *args, **kwargs)
 

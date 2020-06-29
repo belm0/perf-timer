@@ -8,7 +8,7 @@ try:
 except ImportError:
     import trio.hazmat as trio_lowlevel
 
-from perf_timer import trio_perf_counter, _trio, TrioPerfTimer
+from perf_timer import trio_perf_counter, _trio, TrioPerfTimer, AverageObserver
 
 
 async def test_descheduled_time_instrument():
@@ -88,7 +88,7 @@ async def test_trio_perf_timer(autojump_clock):
     # time_fn is called on enter and exit of each with block
     time_fn = Mock(side_effect=[10, 15,
                                 15, 25])
-    timer = TrioPerfTimer('foo', time_fn=time_fn)
+    timer = TrioPerfTimer('foo', observer=AverageObserver, time_fn=time_fn)
 
     for _ in range(2):
         with timer:
@@ -103,7 +103,7 @@ async def test_trio_perf_timer(autojump_clock):
 async def test_trio_perf_timer_decorator(autojump_clock):
     time_fn = Mock(side_effect=[10, 15,
                                 15, 25])
-    timer = TrioPerfTimer('foo', time_fn=time_fn)
+    timer = TrioPerfTimer('foo', observer=AverageObserver, time_fn=time_fn)
 
     @timer
     async def foo():
