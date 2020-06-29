@@ -22,7 +22,9 @@ def _format_duration(duration, precision=3, delimiter=' '):
     if duration > 0:
         i = min(-int(math.floor(math.log10(duration)) // 3), i)
     symbol, scale = units[i]
-    return f'{duration * scale:.{precision}g}{delimiter}{symbol}'
+    # constant precision, keeping trailing zeros but don't end in decimal point
+    value = f'{duration * scale:#.{precision}g}'.rstrip('.')
+    return f'{value}{delimiter}{symbol}'
 
 
 class _BetterContextDecorator:
