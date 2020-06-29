@@ -117,7 +117,6 @@ class AverageObserver(_PerfTimerBase):
                          f'{_format_duration(self._sum)} ')
 
 
-# TODO: tests for stddev observer
 class StdDevObserver(_PerfTimerBase):
     """Mixin which outputs mean, stddev, and max
 
@@ -155,7 +154,6 @@ class StdDevObserver(_PerfTimerBase):
                          f'{_format_duration(self._mean)} ')
 
 
-# TODO: tests for histogram observer
 class HistogramObserver(_PerfTimerBase):
     """Mixin which outputs mean, standard deviation, and percentiles
 
