@@ -95,7 +95,7 @@ async def test_trio_perf_timer(autojump_clock):
             await trio.sleep(1)
 
     assert timer._count == 2
-    assert timer._duration == 15
+    assert timer._sum == 15
     assert timer._max == 10
     del timer
 
@@ -113,6 +113,6 @@ async def test_trio_perf_timer_decorator(autojump_clock):
         await foo()
 
     assert timer._count == 2
-    assert timer._duration == 15
+    assert timer._sum == 15
     assert timer._max == 10
     del timer

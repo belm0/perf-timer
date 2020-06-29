@@ -95,24 +95,24 @@ class AverageObserver(_PerfTimerBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._count = 0
-        self._duration = 0
+        self._sum = 0
         self._max = -math.inf
 
     def _observe(self, duration):
         self._count += 1
-        self._duration += duration
+        self._sum += duration
         self._max = max(self._max, duration)
 
     def __del__(self):
         if self._count > 1:
-            mean = self._duration / self._count
+            mean = self._sum / self._count
             self._log_fn(f'timer "{self.name}": '
                          f'avg {_format_duration(mean)}, '
                          f'max {_format_duration(self._max)} '
                          f'in {self._count} runs')
         elif self._count > 0:
             self._log_fn(f'timer "{self.name}": '
-                         f'{_format_duration(self._duration)} ')
+                         f'{_format_duration(self._sum)} ')
 
 
 # TODO: tests for stddev observer

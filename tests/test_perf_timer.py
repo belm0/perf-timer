@@ -20,7 +20,7 @@ def test_perf_timer():
             pass
 
     assert timer._count == 2
-    assert timer._duration == 15
+    assert timer._sum == 15
     assert timer._max == 10
     del timer
     assert 'in 2 runs' in log_fn.call_args_list[0][0][0]
@@ -39,7 +39,7 @@ def test_perf_timer_decorator():
         foo()
 
     assert timer._count == 2
-    assert timer._duration == 15
+    assert timer._sum == 15
     assert timer._max == 10
     del timer
 
