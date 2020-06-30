@@ -191,14 +191,14 @@ on ye old laptop (2014 MacBook Air 11 1.7GHz i7).
 $ pip install -r test-requirements.txt
 $ python benchmarks/overhead.py
 compare observers:
-    PerfTimer(observer=AverageObserver):         1.4 µs
+    PerfTimer(observer=AverageObserver):         1.5 µs
     PerfTimer(observer=StdDevObserver):          1.8 µs  (default)
-    PerfTimer(observer=HistogramObserver):       5.9 µs
+    PerfTimer(observer=HistogramObserver):       6.0 µs
 
 compare types:
-    PerfTimer(observer=AverageObserver):         1.5 µs
-    ThreadPerfTimer(observer=AverageObserver):   9.2 µs
-    TrioPerfTimer(observer=AverageObserver):     4.4 µs
+    PerfTimer(observer=StdDevObserver):          1.8 µs
+    ThreadPerfTimer(observer=StdDevObserver):    9.8 µs
+    TrioPerfTimer(observer=StdDevObserver):      4.8 µs
 ```
 
 ## TODO

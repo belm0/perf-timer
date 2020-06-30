@@ -5,14 +5,14 @@ The typical observation duration is reported for each case.
 Synopsis:
     $ python overhead.py
     compare observers:
-        PerfTimer(observer=AverageObserver):         1.44 µs
-        PerfTimer(observer=StdDevObserver):          1.75 µs
-        PerfTimer(observer=HistogramObserver):       5.91 µs
+        PerfTimer(observer=AverageObserver):         1.5 µs
+        PerfTimer(observer=StdDevObserver):          1.8 µs  (default)
+        PerfTimer(observer=HistogramObserver):       6.0 µs
 
     compare types:
-        PerfTimer(observer=AverageObserver):         1.43 µs
-        ThreadPerfTimer(observer=AverageObserver):   9.21 µs
-        TrioPerfTimer(observer=AverageObserver):     4.36 µs
+        PerfTimer(observer=StdDevObserver):          1.8 µs
+        ThreadPerfTimer(observer=StdDevObserver):    9.8 µs
+        TrioPerfTimer(observer=StdDevObserver):      4.8 µs
 """
 
 from functools import partial
@@ -27,17 +27,18 @@ from perf_timer._impl import _format_duration
 
 async def main():
     _format = partial(_format_duration, precision=2)
+    default_observer = StdDevObserver
     print('compare observers:')
     timer_type = PerfTimer
     for observer in (AverageObserver, StdDevObserver, HistogramObserver):
         duration = measure_overhead(partial(timer_type, observer=observer))
         item = f'{timer_type.__name__}(observer={observer.__name__}):'
         print(f'    {item:45s}{_format(duration)}'
-              f'{"  (default)" if observer is StdDevObserver else ""}')
+              f'{"  (default)" if observer is default_observer else ""}')
 
     print()
     print('compare types:')
-    observer = AverageObserver
+    observer = default_observer
     for timer_type in (PerfTimer, ThreadPerfTimer, TrioPerfTimer):
         duration = measure_overhead(partial(timer_type, observer=observer))
         item = f'{timer_type.__name__}(observer={observer.__name__}):'
