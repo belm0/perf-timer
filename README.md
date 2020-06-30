@@ -44,12 +44,12 @@ proprietary and one-off instances.
 Features of this library:
 
   * **flexible** - use as a context manager or function decorator;
-  pluggable logging and timer functions
-  * **low overhead** (typically a few microseconds) - it means you can have
-  instrumentation enabled on production code
+  pluggable logging, timer, and observer functions
+  * **low overhead** (typically a few microseconds) - can be
+  employed in hot code paths or even enabled on production deployments
   * **async/await support** (Trio only) - first of its kind!  Periods when a task is
   is sleeping, blocked by I/O, etc. will not be counted.
-  * (coming soon) **percentile durations** - e.g. find median and 90 percentile
+  * **percentile durations** - e.g. report the median and 90th percentile
   execution time of the instrumented code.  Implementated with a bounded-memory,
   streaming histogram.
 
@@ -79,7 +79,7 @@ several times, execution stats will be reported to stdout as
 follows:
 
 ```
-timer "process thumbnail": average 73.1 usec, max 320.5 usec in 292 runs
+timer "process thumbnail": avg 73.1 µs ± 18.0 µs, max 320.5 µs in 292 runs
 ```
 
 A custom logging function may be passed to the `PerfTimer`
@@ -90,6 +90,27 @@ import logging
 
 _logger = logging.getLogger()
 _timer = PerfTimer('process thumbnail', log_fn=_logger.debug)
+```
+
+By default `PerfTimer` will track the average, standard deviation, and maximum
+of observed values.  Other available observers include `HistogramObserver`,
+which reports (customizable) percentiles:
+
+```python
+import random
+import time
+from perf_timer import PerfTimer, HistogramObserver
+
+_timer = PerfTimer('test', observer=HistogramObserver, quantiles=(.5, .9))
+for _ in range(50):
+    with _timer:
+        time.sleep(random.expovariate(1/.1))
+
+del _timer
+```
+output:
+```
+timer "test": avg 117ms ± 128ms, 50% ≤ 81.9ms, 90% ≤ 243ms in 50 runs
 ```
 
 To minimize overhead, `PerfTimer` assumes single-thread access.  Use
@@ -157,13 +178,35 @@ async def get_remote_object():
 pip install perf-timer
 ```
 
+## Measurement overhead
+
+Measurement overhead is important.  The smaller the timer's overhead, the
+less it interferes with the normal timing of your program, and the tighter
+the code loop it can be applied to.
+
+The values below represent the typical overhead of one observation, as measured
+on ye old laptop (2014 MacBook Air 11 1.7GHz i7).
+
+```
+$ pip install -r test-requirements.txt
+$ python benchmarks/overhead.py
+compare observers:
+    PerfTimer(observer=AverageObserver):         1.4 µs
+    PerfTimer(observer=StdDevObserver):          1.8 µs  (default)
+    PerfTimer(observer=HistogramObserver):       5.9 µs
+
+compare types:
+    PerfTimer(observer=AverageObserver):         1.5 µs
+    ThreadPerfTimer(observer=AverageObserver):   9.2 µs
+    TrioPerfTimer(observer=AverageObserver):     4.4 µs
+```
+
 ## TODO
   * features
-    * HistogramObserver (bounded memory and fast)
+    * faster HistogramObserver
     * more async/await support: asyncio, curio, etc.
       * [asyncio hint which no longer works](https://stackoverflow.com/revisions/34827291/3)
   * project infrastructure
     * code coverage integration
     * publish docs
-    * overhead benchmark
     * type annotations and check
