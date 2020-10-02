@@ -1,7 +1,7 @@
 import functools
 import math
 import timeit
-from _contextvars import ContextVar
+from contextvars import ContextVar
 from inspect import iscoroutinefunction
 from multiprocessing import Lock
 from time import perf_counter, thread_time
