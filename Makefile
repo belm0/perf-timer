@@ -8,5 +8,9 @@ test:
 lint:
 	PYTHONPATH=src python -m pylint src/ tests/ benchmarks/
 
+# upgrade all deps:
+#   make -W test-requirements.{in,txt} PIP_COMPILE_ARGS="-U"
+# upgrade specific deps:
+#   make -W test-requirements.{in,txt} PIP_COMPILE_ARGS="-P foo"
 test-requirements.txt: setup.py test-requirements.in
-	pip-compile --output-file $@ $^
+	pip-compile -q $(PIP_COMPILE_ARGS) --output-file $@ $^
