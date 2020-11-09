@@ -1,5 +1,10 @@
 # Release history
 
+## perf-timer (pending)
+### Fixed
+- employ `atexit()` to robustly log results even when `__del__` finalizers are
+  not called
+
 ## perf-timer 0.2.0 (2020-07-01)
 ### Added
 - perf-timer classes now support tracking various statistics

@@ -17,7 +17,7 @@ def test_average_observer(n):
         x = random.expovariate(1/5)  # expected average is 5s
         observer._observe(x)
         points.append(x)
-    del observer
+    observer._report()
     if n > 1:
         # timer "foo": avg 11.9 ms, max 12.8 ms in 10 runs
         log_fn.assert_called_once_with(
@@ -44,7 +44,7 @@ def test_std_dev_observer(n):
         x = random.expovariate(1/5)  # expected average is 5s
         observer._observe(x)
         points.append(x)
-    del observer
+    observer._report()
     if n > 1:
         # timer "foo": avg 11.9 ms ± 961 µs, max 12.8 ms in 10 runs
         log_fn.assert_called_once_with(
@@ -75,7 +75,7 @@ def test_histogram_observer(n):
         x = random.expovariate(1/5)  # expected average is 5s
         observer._observe(x)
         points.append(x)
-    del observer
+    observer._report()
     if n > 1:
         q_expected = numpy.quantile(points, quantiles)
         # timer "foo": avg 11.9ms ± 961µs, 50% ≤ 12.6ms, 90% ≤ 12.7ms in 10 runs

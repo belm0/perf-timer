@@ -1,6 +1,9 @@
+import atexit
 import functools
 import math
 import timeit
+from weakref import WeakSet
+
 from contextvars import ContextVar
 from inspect import iscoroutinefunction
 from multiprocessing import Lock
@@ -9,6 +12,7 @@ from time import perf_counter, thread_time
 from perf_timer._histogram import ApproximateHistogram
 
 _start_time_by_instance = ContextVar('start_time', default={})
+_timers = WeakSet()
 
 
 def _format_duration(duration, precision=3, delimiter=' '):
@@ -70,9 +74,22 @@ class _PerfTimerBase(_BetterContextDecorator):
         self._time_fn = time_fn
         self._log_fn = log_fn
         self._startTimeByInstance = _start_time_by_instance.get()
+        self._reported = False
+        _timers.add(self)
 
     def _observe(self, duration):
         """called for each observed duration"""
+
+    def _report(self):
+        """called to report observation results"""
+
+    def _report_once(self):
+        if not self._reported:
+            self._report()
+            self._reported = True
+
+    def __del__(self):
+        self._report_once()
 
     def __enter__(self):
         if self in self._startTimeByInstance:
@@ -105,7 +122,7 @@ class AverageObserver(_PerfTimerBase):
         self._sum += duration
         self._max = max(self._max, duration)
 
-    def __del__(self):
+    def _report(self):
         if self._count > 1:
             mean = self._sum / self._count
             self._log_fn(f'timer "{self.name}": '
@@ -141,7 +158,7 @@ class StdDevObserver(_PerfTimerBase):
         self._m2 += delta * (duration - self._mean)
         self._max = max(self._max, duration)
 
-    def __del__(self):
+    def _report(self):
         if self._count > 1:
             std = math.sqrt(self._m2 / self._count)
             self._log_fn(f'timer "{self.name}": '
@@ -173,7 +190,7 @@ class HistogramObserver(_PerfTimerBase):
     def _observe(self, duration):
         self._hist.add(duration)
 
-    def __del__(self):
+    def _report(self):
         if self._hist.count > 1:
             _format = functools.partial(_format_duration, delimiter='')
             hist_quantiles = self._hist.quantile(self._quantiles)
@@ -260,3 +277,9 @@ def measure_overhead(timer_factory):
     n, duration = timeit_timer.autorange()
     min_duration = min([duration] + timeit_timer.repeat(number=n))
     return min_duration / n
+
+
+@atexit.register
+def _atexit():
+    while _timers:
+        _timers.pop()._report_once()

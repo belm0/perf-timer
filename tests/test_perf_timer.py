@@ -1,11 +1,12 @@
 from functools import partial
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 
 from perf_timer import PerfTimer, ThreadPerfTimer, \
     AverageObserver, StdDevObserver, HistogramObserver, \
     measure_overhead
+from perf_timer import _impl
 
 
 class _Containing:
@@ -49,7 +50,7 @@ def test_perf_timer():
     assert timer._count == 2
     assert timer._sum == 15
     assert timer._max == 10
-    del timer
+    timer._report()
     log_fn.assert_called_once_with(_Containing('in 2 runs'))
 
 
@@ -77,7 +78,7 @@ def test_perf_timer_one_run():
         pass
 
     assert timer._count == 1
-    del timer
+    timer._report()
     log_fn.assert_called_once_with(_NotContaining(' in '))
 
 
@@ -106,7 +107,7 @@ def test_thread_perf_timer_lock():
         pass
     with timer:
         pass
-    del timer
+    timer._report()
 
     assert lock_count == 2
 
@@ -114,6 +115,35 @@ def test_thread_perf_timer_lock():
 def test_perf_timer_type():
     # since metaclass is used, ensure type is cached
     assert type(PerfTimer('foo')) is type(PerfTimer('bar'))
+
+
+@patch.object(PerfTimer, '_report_once')
+def test_perf_timer_atexit_and_del(_report_once):
+    # atexit and del each cause 1 call to _report_once()
+    timer = PerfTimer('foo')
+    _impl._atexit()
+    del timer
+    assert _report_once.call_count == 2
+
+
+@patch.object(PerfTimer, '_report_once')
+def test_perf_timer_atexit_is_weak(_report_once):
+    # atexit doesn't trigger _report_once() if object already finalized
+    timer = PerfTimer('foo')
+    del timer
+    _impl._atexit()
+    assert _report_once.call_count == 1
+
+
+def test_perf_timer_report():
+    # multiple calls to _report_once() cause only one report
+    log_fn = Mock()
+    timer = PerfTimer('foo', log_fn=log_fn)
+    with timer:
+        pass
+    timer._report_once()
+    timer._report_once()
+    log_fn.assert_called_once()
 
 
 def test_measure_overhead():
