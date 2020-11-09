@@ -72,7 +72,7 @@ class _PerfTimerBase(_BetterContextDecorator):
         self._startTimeByInstance = _start_time_by_instance.get()
 
     def _observe(self, duration):
-        pass
+        """called for each observed duration"""
 
     def __enter__(self):
         if self in self._startTimeByInstance:
@@ -114,7 +114,7 @@ class AverageObserver(_PerfTimerBase):
                          f'in {self._count} runs')
         elif self._count > 0:
             self._log_fn(f'timer "{self.name}": '
-                         f'{_format_duration(self._sum)} ')
+                         f'{_format_duration(self._sum)}')
 
 
 class StdDevObserver(_PerfTimerBase):
@@ -151,7 +151,7 @@ class StdDevObserver(_PerfTimerBase):
                          f'in {self._count} runs')
         elif self._count > 0:
             self._log_fn(f'timer "{self.name}": '
-                         f'{_format_duration(self._mean)} ')
+                         f'{_format_duration(self._mean)}')
 
 
 class HistogramObserver(_PerfTimerBase):
@@ -186,7 +186,7 @@ class HistogramObserver(_PerfTimerBase):
                          f'in {self._hist.count} runs')
         elif self._hist.count > 0:
             self._log_fn(f'timer "{self.name}": '
-                         f'{_format_duration(self._hist.sum())} ')
+                         f'{_format_duration(self._hist.sum())}')
 
 
 class _ObservationLock(_PerfTimerBase):
