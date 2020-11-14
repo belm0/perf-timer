@@ -23,7 +23,7 @@ understand the CPU performance of your Python code:
 
 _PerfTimer_ is a humble instance of #3.  It's the easiest
 way (least amount of fuss and effort) to get insight into
-call count and average execution time of a function or piece
+call count and execution time of a function or piece
 of code during a real session of your program.
 
 Use cases include:
@@ -50,7 +50,7 @@ Features of this library:
   * **async/await support** (Trio only) - first of its kind!  Periods when a task is
   is sleeping, blocked by I/O, etc. will not be counted.
   * **percentile durations** - e.g. report the median and 90th percentile
-  execution time of the instrumented code.  Implementated with a bounded-memory,
+  execution time of the instrumented code.  Implemented with a bounded-memory,
   streaming histogram.
 
 ## Usage
