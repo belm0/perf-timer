@@ -1,6 +1,6 @@
 # Release history
 
-## perf-timer (pending)
+## perf-timer 0.2.2 (2021-03-02)
 ### Fixed
 - handle absence of `time.thread_timer()` gracefully.  This timer, which is the
   default used by `ThreadPerfTimer`, may not be available in some OS X
