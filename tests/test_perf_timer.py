@@ -117,6 +117,11 @@ def test_perf_timer_type():
     assert type(PerfTimer('foo')) is type(PerfTimer('bar'))
 
 
+def test_perf_timer_not_implemented():
+    with pytest.raises(NotImplementedError):
+        PerfTimer('foo', time_fn=None)
+
+
 @patch.object(PerfTimer, '_report_once')
 def test_perf_timer_atexit_and_del(_report_once):
     # atexit and del each cause 1 call to _report_once()
