@@ -1,5 +1,11 @@
 # Release history
 
+## perf-timer (pending)
+### Fixed
+- handle absence of `time.thread_timer()` gracefully.  This timer, which is the
+  default used by `ThreadPerfTimer`, may not be available in some OS X
+  environments.
+
 ## perf-timer 0.2.1 (2020-11-09)
 ### Fixed
 - employ `atexit()` to robustly log results even when `__del__` finalizers are

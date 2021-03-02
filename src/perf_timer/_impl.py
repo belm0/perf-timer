@@ -7,7 +7,12 @@ from weakref import WeakSet
 from contextvars import ContextVar
 from inspect import iscoroutinefunction
 from multiprocessing import Lock
-from time import perf_counter, thread_time
+from time import perf_counter
+try:
+    from time import thread_time
+except ImportError:
+    # thread_time is not available in some OS X environments
+    thread_time = None
 
 from perf_timer._histogram import ApproximateHistogram
 
@@ -62,7 +67,8 @@ class _PerfTimerBase(_BetterContextDecorator):
                  observer=None, quantiles=None):
         """
         :param name: string used to annotate the timer output
-        :param time_fn: optional function which returns the current time
+        :param time_fn: optional function which returns the current time.
+            (A None value will raise NotImplementedError.)
         :param log_fn: optional function which records the output string
         :param observer: mixin class to observe and summarize samples
             (AverageObserver|StdDevObserver|HistogramObserver, default StdDevObserver)
@@ -70,6 +76,8 @@ class _PerfTimerBase(_BetterContextDecorator):
             Values must be in range [0..1] and monotonically increasing.
             (default: (0.5, 0.9, 0.98))
         """
+        if not time_fn:
+            raise NotImplementedError
         self.name = name
         self._time_fn = time_fn
         self._log_fn = log_fn
@@ -258,7 +266,11 @@ class PerfTimer(_PerfTimerBase, metaclass=_MixinMeta):
 
 
 class ThreadPerfTimer(_ObservationLock, PerfTimer):
-    """Variant of PerfTimer which measures CPU time of the current thread"""
+    """Variant of PerfTimer which measures CPU time of the current thread
+
+    (Implemented with time.thread_time by default, which may not be available
+    in some OS X environments.)
+    """
 
     def __init__(self, name, time_fn=thread_time, **kwargs):
         super().__init__(name, time_fn=time_fn, **kwargs)
