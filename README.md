@@ -82,15 +82,18 @@ follows:
 timer "process thumbnail": avg 73.1 µs ± 18.0 µs, max 320.5 µs in 292 runs
 ```
 
-A custom logging function may be passed to the `PerfTimer`
-constructor:
+### decorator style
+
+To instrument an entire function or class method, use `PerfTimer`
+as a decorator:
 
 ```python
-import logging
-
-_logger = logging.getLogger()
-_timer = PerfTimer('process thumbnail', log_fn=_logger.debug)
+@PerfTimer('get thumbnail')
+def get_thumbnail_image(path):
+    ...
 ```
+
+### histogram statistics
 
 By default `PerfTimer` will track the average, standard deviation, and maximum
 of observed values.  Other available observers include `HistogramObserver`,
@@ -113,6 +116,20 @@ output:
 timer "test": avg 117ms ± 128ms, 50% ≤ 81.9ms, 90% ≤ 243ms in 50 runs
 ```
 
+### custom logging
+
+A custom logging function may be passed to the `PerfTimer`
+constructor:
+
+```python
+import logging
+
+_logger = logging.getLogger()
+_timer = PerfTimer('process thumbnail', log_fn=_logger.debug)
+```
+
+### OS thread support
+
 To minimize overhead, `PerfTimer` assumes single-thread access.  Use
 `ThreadPerfTimer` in multi-thread scenarios:
 
@@ -122,16 +139,9 @@ from perf_timer import ThreadPerfTimer
 _timer = ThreadPerfTimer('process thumbnail')
 ```
 
-To instrument an entire function or class method, use `PerfTimer`
-as a decorator:
+### async support
 
-```python
-@PerfTimer('get thumbnail')
-def get_thumbnail_image(path):
-    ...
-```
-
-In this example however, timing the entire function will include file
+In the previous example, timing the entire function will include file
 I/O time since `PerfTimer` measures wall time by default.  For programs
 which happen to do I/O via the Trio async/await library, you
 can use `TrioPerfTimer` which measures time only when the current task
