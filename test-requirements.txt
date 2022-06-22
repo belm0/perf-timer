@@ -4,28 +4,69 @@
 #
 #    pip-compile --output-file=test-requirements.txt setup.py test-requirements.in
 #
-astroid==2.4.2            # via pylint
-async-generator==1.10     # via pytest-trio, trio
-attrs==20.2.0             # via outcome, pytest, trio
-coverage==5.3             # via pytest-cov
-idna==2.10                # via trio
-iniconfig==1.0.1          # via pytest
-isort==5.5.4              # via pylint
-lazy-object-proxy==1.4.3  # via astroid
-mccabe==0.6.1             # via pylint
-numpy==1.19.2             # via -r test-requirements.in
-outcome==1.0.1            # via pytest-trio, trio
-packaging==20.4           # via pytest
-pluggy==0.13.1            # via pytest
-py==1.9.0                 # via pytest
-pylint==2.6.0             # via -r test-requirements.in
-pyparsing==2.4.7          # via packaging
-pytest-cov==2.10.1        # via -r test-requirements.in
-pytest-trio==0.6.0        # via -r test-requirements.in
-pytest==6.1.0             # via -r test-requirements.in, pytest-cov, pytest-trio
-six==1.15.0               # via astroid, packaging
-sniffio==1.1.0            # via trio
-sortedcontainers==2.2.2   # via trio
-toml==0.10.1              # via pylint, pytest
-trio==0.17.0              # via -r test-requirements.in, pytest-trio
-wrapt==1.12.1             # via astroid
+astroid==2.4.2
+    # via pylint
+async-generator==1.10
+    # via
+    #   pytest-trio
+    #   trio
+attrs==20.2.0
+    # via
+    #   outcome
+    #   pytest
+    #   trio
+coverage==5.3
+    # via pytest-cov
+idna==2.10
+    # via trio
+iniconfig==1.0.1
+    # via pytest
+isort==5.5.4
+    # via pylint
+lazy-object-proxy==1.4.3
+    # via astroid
+mccabe==0.6.1
+    # via pylint
+numpy==1.22.0
+    # via -r test-requirements.in
+outcome==1.0.1
+    # via
+    #   pytest-trio
+    #   trio
+packaging==20.4
+    # via pytest
+pluggy==0.13.1
+    # via pytest
+py==1.9.0
+    # via pytest
+pylint==2.6.0
+    # via -r test-requirements.in
+pyparsing==2.4.7
+    # via packaging
+pytest==6.1.0
+    # via
+    #   -r test-requirements.in
+    #   pytest-cov
+    #   pytest-trio
+pytest-cov==2.10.1
+    # via -r test-requirements.in
+pytest-trio==0.6.0
+    # via -r test-requirements.in
+six==1.15.0
+    # via
+    #   astroid
+    #   packaging
+sniffio==1.1.0
+    # via trio
+sortedcontainers==2.2.2
+    # via trio
+toml==0.10.1
+    # via
+    #   pylint
+    #   pytest
+trio==0.17.0
+    # via
+    #   -r test-requirements.in
+    #   pytest-trio
+wrapt==1.12.1
+    # via astroid
