@@ -76,6 +76,7 @@ class _PerfTimerBase(_BetterContextDecorator):
             Values must be in range [0..1] and monotonically increasing.
             (default: (0.5, 0.9, 0.98))
         """
+        self._init_ok = False
         if not time_fn:
             raise NotImplementedError
         self.name = name
@@ -84,6 +85,7 @@ class _PerfTimerBase(_BetterContextDecorator):
         self._startTimeByInstance = _start_time_by_instance.get()
         self._reported = False
         _timers.add(self)
+        self._init_ok = True
 
     def _observe(self, duration):
         """called for each observed duration"""
@@ -97,7 +99,8 @@ class _PerfTimerBase(_BetterContextDecorator):
             self._reported = True
 
     def __del__(self):
-        self._report_once()
+        if self._init_ok:
+            self._report_once()
 
     def __enter__(self):
         if self in self._startTimeByInstance:
@@ -188,12 +191,14 @@ class HistogramObserver(_PerfTimerBase):
 
     def __init__(self, *args, quantiles=(.5, .9, .98), max_bins=64, **kwargs):
         super().__init__(*args, **kwargs)
+        self._init_ok = False
         if not all(0 <= x <= 1 for x in quantiles):
             raise ValueError('quantile values must be in the range [0, 1]')
         if not all(a < b for a, b in zip(quantiles, quantiles[1:])):
             raise ValueError('quantiles must be monotonically increasing')
         self._quantiles = quantiles
         self._hist = ApproximateHistogram(max_bins=max_bins)
+        self._init_ok = True
 
     def _observe(self, duration):
         self._hist.add(duration)

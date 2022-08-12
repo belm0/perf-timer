@@ -1,5 +1,9 @@
 # Release history
 
+## perf-timer 0.3.0 (pending)
+### Fixed
+- fix `__del__` exception on badly-constructed instances
+
 ## perf-timer 0.2.2 (2021-03-02)
 ### Fixed
 - handle absence of `time.thread_timer()` gracefully.  This timer, which is the
