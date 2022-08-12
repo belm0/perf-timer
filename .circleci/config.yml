@@ -7,7 +7,7 @@ version: 2
 jobs:
   "python-3.7":
     docker:
-      - image: circleci/python:3.7
+      - image: cimg/python:3.7
 
     working_directory: ~/repo
 
@@ -15,8 +15,8 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "test-requirements.txt" }}
-            - v1-dependencies-
+            - v2-dependencies-{{ checksum "test-requirements.txt" }}
+            - v2-dependencies-
       - run:
           name: install dependencies
           command: |
@@ -26,7 +26,7 @@ jobs:
       - save_cache:
           paths:
             - ./venv
-          key: v1-dependencies-{{ checksum "test-requirements.txt" }}
+          key: v2-dependencies-{{ checksum "test-requirements.txt" }}
       - run:
           name: run tests
           command: |
@@ -40,7 +40,7 @@ jobs:
 
   "python-3.7_trio-0.11":
     docker:
-      - image: circleci/python:3.7
+      - image: cimg/python:3.7
 
     working_directory: ~/repo
 
@@ -48,8 +48,8 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "test-requirements_trio-0.11.txt" }}
-            - v1-dependencies-
+            - v2-dependencies-{{ checksum "test-requirements_trio-0.11.txt" }}
+            - v2-dependencies-
       - run:
           name: install dependencies
           command: |
@@ -59,7 +59,7 @@ jobs:
       - save_cache:
           paths:
             - ./venv
-          key: v1-dependencies-{{ checksum "test-requirements_trio-0.11.txt" }}
+          key: v2-dependencies-{{ checksum "test-requirements_trio-0.11.txt" }}
       - run:
           name: run tests
           command: |
@@ -73,7 +73,7 @@ jobs:
 
   "python-3.8":
     docker:
-      - image: circleci/python:3.8
+      - image: cimg/python:3.8
 
     working_directory: ~/repo
 
@@ -81,8 +81,8 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "test-requirements.txt" }}
-            - v1-dependencies-
+            - v2-dependencies-{{ checksum "test-requirements.txt" }}
+            - v2-dependencies-
       - run:
           name: install dependencies
           command: |
@@ -92,7 +92,7 @@ jobs:
       - save_cache:
           paths:
             - ./venv
-          key: v1-dependencies-{{ checksum "test-requirements.txt" }}
+          key: v2-dependencies-{{ checksum "test-requirements.txt" }}
       - run:
           name: run tests
           command: |
@@ -106,7 +106,7 @@ jobs:
 
   "python-3.9":
     docker:
-      - image: circleci/python:3.9
+      - image: cimg/python:3.9
 
     working_directory: ~/repo
 
@@ -114,8 +114,8 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "test-requirements.txt" }}
-            - v1-dependencies-
+            - v2-dependencies-{{ checksum "test-requirements.txt" }}
+            - v2-dependencies-
       - run:
           name: install dependencies
           command: |
@@ -125,7 +125,7 @@ jobs:
       - save_cache:
           paths:
             - ./venv
-          key: v1-dependencies-{{ checksum "test-requirements.txt" }}
+          key: v2-dependencies-{{ checksum "test-requirements.txt" }}
       - run:
           name: run tests
           command: |
@@ -139,7 +139,7 @@ jobs:
 
   "python-3.10":
     docker:
-      - image: circleci/python:3.10
+      - image: cimg/python:3.10
 
     working_directory: ~/repo
 
@@ -147,8 +147,8 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "test-requirements.txt" }}
-            - v1-dependencies-
+            - v2-dependencies-{{ checksum "test-requirements.txt" }}
+            - v2-dependencies-
       - run:
           name: install dependencies
           command: |
@@ -158,7 +158,7 @@ jobs:
       - save_cache:
           paths:
             - ./venv
-          key: v1-dependencies-{{ checksum "test-requirements.txt" }}
+          key: v2-dependencies-{{ checksum "test-requirements.txt" }}
       - run:
           name: run tests
           command: |
