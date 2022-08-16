@@ -8,7 +8,8 @@ try:
 except ImportError:
     import trio.hazmat as trio_lowlevel
 
-from perf_timer import trio_perf_counter, _trio, TrioPerfTimer, AverageObserver, trio_hierarchy_perf_counter
+from perf_timer import (trio_perf_counter, trio_hierarchy_perf_counter, _trio,
+                        TrioPerfTimer, AverageObserver)
 
 
 async def _work(duration, count=1):
@@ -73,7 +74,7 @@ async def test_trio_perf_counter_time_sleep():
     assert dt == pytest.approx(.5, rel=.15)
 
 
-async def test_trio_perf_counter_child():
+async def test_trio_hierarchy_perf_counter():
     t0 = trio_hierarchy_perf_counter()
     async with trio.open_nursery() as nursery:
         await _work(.05, 3)

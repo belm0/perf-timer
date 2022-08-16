@@ -1,7 +1,6 @@
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from time import perf_counter
-from typing import Set
 
 import trio
 try:
@@ -71,64 +70,44 @@ def trio_perf_counter():
     return perf_counter() - _instrument.get_elapsed_descheduled_time(task)
 
 
-@dataclass
-class _HierarchyTimeInfo:
-    hierarchy_tasks: Set[trio_lowlevel.Task] = field(default_factory=set)
-    deschedule_start: float = 0
-    elapsed_descheduled: float = 0
-
-
 class _HierarchyDescheduledTimeInstrument(trio.abc.Instrument):
-    """Trio instrument tracking elapsed descheduled time of given task and children"""
+    """Trio instrument tracking elapsed descheduled time of given task and children
+
+    The implementation is similar to _DescheduledTimeInstrument, except on task
+    steps we walk up the task tree to find tracked tasks.  This probably has
+    significant overhead since it must be done even for untracked hierarchies.
+    """
 
     def __init__(self, time_fn=perf_counter):
         self._time_fn = time_fn
-        self._info_by_root_task = defaultdict(_HierarchyTimeInfo)
+        self._info_by_root_task = defaultdict(_TimeInfo)
 
-    def task_spawned(self, task: trio_lowlevel.Task):
-        # TODO: Maintain a global tree rather than a set per root, avoiding O(N)
-        #  on task spawn and exit.  (But then task steps are O(N)...)
-        if task.parent_nursery:
-            parent_task = task.parent_nursery.parent_task
-            for info in self._info_by_root_task.values():
-                if parent_task in info.hierarchy_tasks:
-                    info.hierarchy_tasks.add(task)
+    def _parents_info(self, task: trio_lowlevel.Task):
+        while True:
+            info = self._info_by_root_task.get(task)
+            if info:
+                yield info
+            parent_nursery = task.parent_nursery
+            if parent_nursery:
+                task = parent_nursery.parent_task
+            else:
+                break
 
     def task_exited(self, task: trio_lowlevel.Task):
-        for info in self._info_by_root_task.values():
-            info.hierarchy_tasks.discard(task)
-
-        root_info = self._info_by_root_task.pop(task, None)
-        if root_info:
-            assert not root_info.hierarchy_tasks
-            if not self._info_by_root_task:
-                trio_lowlevel.remove_instrument(self)
+        if self._info_by_root_task.pop(task, None) and not self._info_by_root_task:
+            trio_lowlevel.remove_instrument(self)
 
     def after_task_step(self, task: trio_lowlevel.Task):
-        for info in self._info_by_root_task.values():
-            if task in info.hierarchy_tasks:
-                info.descheduled_start = self._time_fn()
+        # TODO: maintain global "tracked tasks" to provide a fast path?
+        for info in self._parents_info(task):
+            info.deschedule_start = self._time_fn()
 
     def before_task_step(self, task: trio_lowlevel.Task):
-        for info in self._info_by_root_task.values():
-            if task in info.hierarchy_tasks:
-                info.elapsed_descheduled += self._time_fn() - info.descheduled_start
+        for info in self._parents_info(task):
+            info.elapsed_descheduled += self._time_fn() - info.deschedule_start
 
     def get_elapsed_descheduled_time(self, task: trio_lowlevel.Task):
-        info = self._info_by_root_task[task]
-        hierarchy_tasks = info.hierarchy_tasks
-
-        if not hierarchy_tasks:  # newly tracked root
-            hierarchy_tasks.add(task)
-            # populate existing child tasks of the root
-            nurseries = set(task.child_nurseries)
-            while nurseries:
-                nursery: trio.Nursery = nurseries.pop()
-                for child_task in nursery.child_tasks:
-                    hierarchy_tasks.add(child_task)
-                    nurseries.update(child_task.child_nurseries)
-
-        return info.elapsed_descheduled
+        return self._info_by_root_task[task].elapsed_descheduled
 
 
 _hierarchy_instrument = _HierarchyDescheduledTimeInstrument()
@@ -166,4 +145,11 @@ class TrioPerfTimer(PerfTimer):
     """
 
     def __init__(self, name, time_fn=trio_perf_counter, **kwargs):
+        super().__init__(name, time_fn=time_fn, **kwargs)
+
+
+# TODO: The shorter trio_perf_counter and TrioPerfTimer names should include
+#  hierarchy, and non-hierarchy variants relegated to longer names.
+class TrioHierarchyPerfTimer(TrioPerfTimer):
+    def __init__(self, name, time_fn=trio_hierarchy_perf_counter, **kwargs):
         super().__init__(name, time_fn=time_fn, **kwargs)
