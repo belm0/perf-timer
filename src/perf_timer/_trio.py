@@ -82,11 +82,13 @@ class _HierarchyDescheduledTimeInstrument(trio.abc.Instrument):
         self._time_fn = time_fn
         self._info_by_root_task = defaultdict(_TimeInfo)
 
-    def _parents_info(self, task: trio_lowlevel.Task):
+    def _parents_info(self, task: trio_lowlevel.Task, time_fn):
+        t = 0
         while True:
             info = self._info_by_root_task.get(task)
             if info:
-                yield info
+                t = t or time_fn()
+                yield info, t
             parent_nursery = task.parent_nursery
             if parent_nursery:
                 task = parent_nursery.parent_task
@@ -99,12 +101,12 @@ class _HierarchyDescheduledTimeInstrument(trio.abc.Instrument):
 
     def after_task_step(self, task: trio_lowlevel.Task):
         # TODO: maintain global "tracked tasks" to provide a fast path?
-        for info in self._parents_info(task):
-            info.deschedule_start = self._time_fn()
+        for info, t in self._parents_info(task, self._time_fn):
+            info.deschedule_start = t
 
     def before_task_step(self, task: trio_lowlevel.Task):
-        for info in self._parents_info(task):
-            info.elapsed_descheduled += self._time_fn() - info.deschedule_start
+        for info, t in self._parents_info(task, self._time_fn):
+            info.elapsed_descheduled += t - info.deschedule_start
 
     def get_elapsed_descheduled_time(self, task: trio_lowlevel.Task):
         return self._info_by_root_task[task].elapsed_descheduled
