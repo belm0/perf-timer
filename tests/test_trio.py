@@ -8,7 +8,13 @@ try:
 except ImportError:
     import trio.hazmat as trio_lowlevel
 
-from perf_timer import trio_perf_counter, _trio, TrioPerfTimer, AverageObserver
+from perf_timer import trio_perf_counter, _trio, TrioPerfTimer, AverageObserver, trio_hierarchy_perf_counter
+
+
+async def _work(duration, count=1):
+    for _ in range(count):
+        time.sleep(duration)
+        await trio.sleep(0)
 
 
 async def test_descheduled_time_instrument():
@@ -62,118 +68,65 @@ async def test_descheduled_time_instrument_exclude_children():
 async def test_trio_perf_counter_time_sleep():
     # NOTE: subject to false pass due to reliance on wall time
     t0 = trio_perf_counter()
-    time.sleep(.01)
+    await _work(.1, 5)
     dt = trio_perf_counter() - t0
-    assert dt == pytest.approx(.01, rel=.2)
-
-
-class _TaskHierarchyTimeInstrument(trio.abc.Instrument):
-    def __init__(self, time_fn=time.perf_counter):
-        self._time_fn = time_fn
-        self._root_task = trio_lowlevel.current_task()
-        self._hierarchy_tasks = {self._root_task}
-        self._descheduled_start = 0.
-        self._descheduled_elapsed = 0.
-
-        # populate existing child tasks of the root
-        nurseries = set(self._root_task.child_nurseries)
-        while nurseries:
-            nursery: trio.Nursery = nurseries.pop()
-            for child_task in nursery.child_tasks:
-                self._hierarchy_tasks.add(child_task)
-                nurseries.update(child_task.child_nurseries)
-
-    def task_spawned(self, task: trio_lowlevel.Task):
-        if task.parent_nursery and task.parent_nursery.parent_task in self._hierarchy_tasks:
-            self._hierarchy_tasks.add(task)
-
-    def task_exited(self, task: trio_lowlevel.Task):
-        self._hierarchy_tasks.discard(task)
-
-    def after_task_step(self, task: trio_lowlevel.Task):
-        if task in self._hierarchy_tasks:
-            self._descheduled_start = self._time_fn()
-
-    def before_task_step(self, task: trio_lowlevel.Task):
-        if task in self._hierarchy_tasks:
-            self._descheduled_elapsed += self._time_fn() - self._descheduled_start
-
-    def _finalize(self):
-        assert self._hierarchy_tasks == {self._root_task}
-
-    def get_elapsed_descheduled_time(self):
-        return self._descheduled_elapsed
-
-
-async def _work(duration, count=1):
-    for _ in range(count):
-        time.sleep(duration)
-        await trio.sleep(0)
+    assert dt == pytest.approx(.5, rel=.15)
 
 
 async def test_trio_perf_counter_child():
-    instrument = _TaskHierarchyTimeInstrument()
-    trio_lowlevel.add_instrument(instrument)
-    t0 = time.perf_counter() - instrument.get_elapsed_descheduled_time()
-    try:
-        async with trio.open_nursery() as nursery:
-            await _work(.05, 3)
+    t0 = trio_hierarchy_perf_counter()
+    async with trio.open_nursery() as nursery:
+        await _work(.05, 3)
 
-            @nursery.start_soon
-            async def _child():
-                async with trio.open_nursery() as nursery2:
-                    @nursery2.start_soon
-                    async def _child_child():
-                        await _work(.05, 5)
-
+        @nursery.start_soon
+        async def _child():
+            async with trio.open_nursery() as nursery2:
+                @nursery2.start_soon
+                async def _child_child():
                     await _work(.05, 5)
 
-            @nursery.start_soon
-            async def _child_2():
-                await _work(.05, 10)
-    finally:
-        trio_lowlevel.remove_instrument(instrument)
-        instrument._finalize()
-        dt = (time.perf_counter() - instrument.get_elapsed_descheduled_time()) - t0
-        print('total time:', round(dt, 2))
-        assert dt == pytest.approx(1.15, rel=.1)
+                await _work(.05, 5)
+
+        @nursery.start_soon
+        async def _child_2():
+            await _work(.05, 10)
+
+    dt = trio_hierarchy_perf_counter() - t0
+    assert dt == pytest.approx(1.15, rel=.15)
 
 
-async def test_trio_perf_counter_child_partial():
-    try:
-        async with trio.open_nursery() as nursery:
-            @nursery.start_soon
-            async def _child():
-                async with trio.open_nursery() as nursery2:
-                    @nursery2.start_soon
-                    async def _child_child():
-                        await _work(.1, 5)
-
+async def test_trio_hierarchy_perf_counter_active_children():
+    # trio_hierarchy_perf_counter() should work even if the task already has children
+    async with trio.open_nursery() as nursery:
+        @nursery.start_soon
+        async def _child():
+            async with trio.open_nursery() as nursery2:
+                @nursery2.start_soon
+                async def _child_child():
                     await _work(.1, 5)
 
-            await trio.sleep(.5)
+                await _work(.1, 5)
 
-            instrument = _TaskHierarchyTimeInstrument()
-            trio_lowlevel.add_instrument(instrument)
-            t0 = time.perf_counter() - instrument.get_elapsed_descheduled_time()
+        await trio.sleep(.5)
+        t0 = trio_hierarchy_perf_counter()
 
-            @nursery.start_soon
-            async def _child_2():
-                await _work(.1, 10)
+        @nursery.start_soon
+        async def _child_2():
+            await _work(.1, 10)
 
-    finally:
-        trio.lowlevel.remove_instrument(instrument)
-        instrument._finalize()
-        dt = (time.perf_counter() - instrument.get_elapsed_descheduled_time()) - t0
-        print('total time:', round(dt, 2))
-        assert dt == pytest.approx(1.5, rel=.1)
+    dt = trio_hierarchy_perf_counter() - t0
+    assert dt == pytest.approx(1.5, rel=.15)
 
 
-async def test_trio_perf_counter_unregister():
+@pytest.mark.parametrize('counter_fn, instrument', [
+    (trio_perf_counter, _trio._instrument),
+    (trio_hierarchy_perf_counter, _trio._hierarchy_instrument),
+])
+async def test_trio_perf_counter_unregister(counter_fn, instrument: trio.abc.Instrument):
     async def perf_counter_with_trio_sleep():
-        trio_perf_counter()
+        counter_fn()
         await trio.sleep(0)
-        trio_perf_counter()
+        counter_fn()
 
     async with trio.open_nursery() as nursery:
         nursery.start_soon(perf_counter_with_trio_sleep)
@@ -183,7 +136,7 @@ async def test_trio_perf_counter_unregister():
     # the Trio instrumentation to no longer be active (so remove call
     # will fail).
     with pytest.raises(KeyError):
-        trio_lowlevel.remove_instrument(_trio._instrument)
+        trio_lowlevel.remove_instrument(instrument)
 
 
 async def test_trio_perf_timer(autojump_clock):
@@ -218,3 +171,19 @@ async def test_trio_perf_timer_decorator(autojump_clock):
     assert timer._sum == 15
     assert timer._max == 10
     del timer
+
+
+# TODO: test nested perf timers on the same task
+# async def _foo():
+#     with TrioPerfTimer('timer1'):
+#         async with trio.open_nursery() as nursery:
+#             @nursery.start_soon
+#             async def _child_1():
+#                 pass  # do work
+#
+#             # do work
+#
+#             with TrioPerfTimer('timer2'):
+#                 @nursery.start_soon
+#                 async def _child_2():
+#                     pass  # do work

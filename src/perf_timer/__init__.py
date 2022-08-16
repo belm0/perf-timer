@@ -1,7 +1,7 @@
 from ._impl import (PerfTimer, ThreadPerfTimer, AverageObserver,
                     StdDevObserver, HistogramObserver, measure_overhead)
 try:
-    from ._trio import trio_perf_counter, TrioPerfTimer
+    from ._trio import trio_perf_counter, trio_hierarchy_perf_counter, TrioPerfTimer
 except ImportError:
     pass
 from ._version import __version__
