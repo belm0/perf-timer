@@ -1,4 +1,4 @@
-[![Build status](https://img.shields.io/circleci/build/github/belm0/perf-timer)](https://circleci.com/gh/belm0/perf-timer)
+[![Build status](https://img.shields.io/github/workflow/status/belm0/perf-timer/CI)](https://github.com/belm0/perf-timer/actions/workflows/ci.yml?query=branch%3Amaster+)
 [![Package version](https://img.shields.io/pypi/v/perf-timer.svg)](https://pypi.org/project/perf-timer)
 [![Supported Python versions](https://img.shields.io/pypi/pyversions/perf-timer.svg)](https://pypi.org/project/perf-timer)
 

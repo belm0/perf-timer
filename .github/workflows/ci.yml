@@ -1,0 +1,25 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.7', '3.8', '3.9', '3.10']
+        requirements: [test-requirements.txt]
+        include:
+          - python-version: '3.7'
+            requirements: test-requirements_trio-0.11.txt
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: ${{ matrix.requirements }}
+      # TODO: unpinned "latest" build
+      - run: pip install . -r ${{ matrix.requirements }}
+      - run: make test lint
