@@ -1,6 +1,5 @@
 [MASTER]
-disable=bad-whitespace,
-        blacklisted-name,
+disable=blacklisted-name,
         duplicate-code,
         invalid-name,
         fixme,
