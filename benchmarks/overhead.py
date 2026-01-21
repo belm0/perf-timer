@@ -21,7 +21,7 @@ import trio
 
 from perf_timer import (PerfTimer, ThreadPerfTimer, TrioPerfTimer,
                         AverageObserver, StdDevObserver, HistogramObserver,
-                        measure_overhead)
+                        measure_overhead, TrioHierarchyPerfTimer)
 from perf_timer._impl import _format_duration
 
 
@@ -39,7 +39,7 @@ async def main():
     print()
     print('compare types:')
     observer = default_observer
-    for timer_type in (PerfTimer, ThreadPerfTimer, TrioPerfTimer):
+    for timer_type in (PerfTimer, ThreadPerfTimer, TrioPerfTimer, TrioHierarchyPerfTimer):
         duration = measure_overhead(partial(timer_type, observer=observer))
         item = f'{timer_type.__name__}(observer={observer.__name__}):'
         print(f'    {item:45s}{_format(duration)}')
